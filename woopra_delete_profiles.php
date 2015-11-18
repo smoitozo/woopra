@@ -3,8 +3,12 @@
  * A quick and dirty PHP shell script for deleting a list of profiles from Woopra using their API.
  * I used it to get rid of a bunch of spurious profiles created by a bot that hit one of my sites.
  *
- * After adjusting the CONFIGURATION section and providing the comma delimited list of PIDs in the 
- * DATA section you can execute this script from the command line as follows:
+ * 1) Tag all the profiles you want to get rid of. Then export them from Woopra in CSV. Then 
+ * paste your nice neat string of PID,PID,PID into $woopra_profile_ids under the DATA section.
+ *
+ * 2) Adjust the CONFIGURATION section with your AppID, SecretKey, and the domain for your website.  
+ * 
+ * 3) Execute this script from the command line as follows:
  *
  *   php -q woopra_delete_profiles.php
  *
