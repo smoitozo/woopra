@@ -11,7 +11,7 @@
  *
  *   php -q woopra_delete_profiles.php > output.log
  *
- * Author: Steve Moitozo
+ * Author: Steve Moitozo @SteveMoitozo2
  * Date: 17 Oct 2015
  * License: MIT
  */
