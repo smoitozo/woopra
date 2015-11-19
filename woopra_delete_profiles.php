@@ -3,21 +3,20 @@
  * A quick and dirty PHP shell script for deleting a list of profiles from Woopra using their API.
  * I used it to get rid of a bunch of spurious profiles created by a bot that hit one of my sites.
  *
- * 1) Tag all the profiles you want to get rid of. Then export them from Woopra in CSV. Then 
- * paste your nice neat string of PID,PID,PID into $woopra_profile_ids under the DATA section.
+ * 1) Tag all the profiles you want to get rid of. Then export them from Woopra in CSV. 
  *
  * 2) Adjust the CONFIGURATION section with your AppID, SecretKey, and the domain for your website.  
  * 
  * 3) Execute this script from the command line as follows:
  *
- *   php -q woopra_delete_profiles.php
+ *   php -q woopra_delete_profiles.php /path/to/woopra/export/file.csv
  *
  * If you would like to capture the return messages in a log file you can execute the script like this:
  *
- *   php -q woopra_delete_profiles.php > output.log
+ *   php -q woopra_delete_profiles.php  /path/to/woopra/export/file.csv > output.log
  *
  * Author: Steve Moitozo @SteveMoitozo2
- * Date: 17 Oct 2015
+ * Date: 19 Oct 2015
  * License: MIT
  */
 
@@ -31,26 +30,34 @@ $woopra_website = "YOUR DOMAIN";
 $woopra_search_key = "pid";
 
 
-/*
- * DATA
- */
 
-//Provide the comma delimited list of profile IDs to operate on
-$woopra_profile_ids = "SOME_PID,SOME_OTHER_PID";
 
 /*
  * EXECUTION (Don't touch)
  */
 
-// Create an array of profile IDs
-$arrProfileIDs = explode(',', $woopra_profile_ids);
+// Were we handed the path to the Woopra export file?
+if(!(isset($argv[1]) && $argv[1])){
+        die("Whoa, wait a minute. I need you to tell me where Woopra export file with the PIDs is.\n");
+}
 
-// Loop over the IDs and delete each one
+// Does the file exist?
+if(!(file_exists($argv[1]) && is_file($argv[1]))){
+        die("Hmmm. This file doesn't exist (" . $argv[1] . ")\n");
+}
+
+// Create an array of profile IDs
+$arrProfileIDs = woopraExport2PidArray($argv[1]);
+
+print("We're ready to go, deleting " . count($arrProfileIDs) . " PIDs from Woopra.\n");
+
+// Loop over the IDs and delete each one from Woopra
 foreach($arrProfileIDs as $strPid){
 
         print(deleteWoopraProfile($strPid));
 
 }
+
 
 /*
  * USEFUL FUNCTIONS
@@ -58,24 +65,45 @@ foreach($arrProfileIDs as $strPid){
 
 // A function for deleting a profile from Woopra
 function deleteWoopraProfile($pid){
-        GLOBAL $woopra_api_url, $woopra_appid, $woopra_key, $woopra_website, $woopra_search_key;
+	GLOBAL $woopra_api_url, $woopra_appid, $woopra_key, $woopra_website, $woopra_search_key;
 
-        $fields = 'website=' . urlencode($woopra_website) . '&pid=' . urlencode($pid);
+	$fields = 'website=' . urlencode($woopra_website) . '&pid=' . urlencode($pid);
 
-        $ch = curl_init();
+	$ch = curl_init();
 
-        curl_setopt($ch, CURLOPT_URL, $woopra_api_url);
-        curl_setopt($ch, CURLOPT_USERPWD, $woopra_appid . ':' . $woopra_key);
+	curl_setopt($ch, CURLOPT_URL, $woopra_api_url);
+	curl_setopt($ch, CURLOPT_USERPWD, $woopra_appid . ':' . $woopra_key);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_POST, 2);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
+	curl_setopt($ch, CURLOPT_HEADER, 0);
+	curl_setopt($ch, CURLOPT_POST, 2);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
 
         // execute the post
-        $result = curl_exec($ch);
+	$result = curl_exec($ch);
 
-        curl_close($ch);
+	curl_close($ch);
 
-        return $result . "(" . $pid . ")
-";
+	return $result . "(" . $pid . ")\n";
 }
+
+// A function to read in a Woopra export file and return an array of PIDs
+function woopraExport2PidArray($woopraExportFilePath){
+
+        $arrContents = file($woopraExportFilePath);
+    
+        $arrPids = array();
+    
+        foreach($arrContents as $line){
+                $arrLine = explode('","', $line);
+                $strPid = str_replace('"','',$arrLine[0]);
+    	
+                // Skip the first line
+                if('"~pid' != $strPid){
+                        $arrPids[] = $strPid;
+                }
+        }
+    
+        return $arrPids;
+}
+
+?>
