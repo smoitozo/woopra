@@ -4,6 +4,7 @@
  * I used it to get rid of a bunch of spurious profiles created by a bot that hit one of my sites.
  *
  * 1) Tag all the profiles you want to get rid of. Then export them from Woopra in CSV. 
+ *    NOTE: Check the file to ensure that the first column is "~pid".
  *
  * 2) Adjust the CONFIGURATION section with your AppID, SecretKey, and the domain for your website.  
  * 
